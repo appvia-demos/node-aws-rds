@@ -10,7 +10,7 @@ metadata:
     github.com/project-slug: appvia-demos/node-aws-rds
     sonarqube.org/project-key: appvia-demos_node-aws-rds
     backstage.io/techdocs-ref: url:https://github.com/appvia-demos/node-aws-rds/tree/main
-    jfrog-artifactory/image-name: /node-aws-rds
+    jfrog-artifactory/image-name: docker-trial/node-aws-rds
     wayfinder/workspace: demo    
     wayfinder/app-name: node-aws-rds
     wayfinder/app-component-name: node-aws-rds-app
