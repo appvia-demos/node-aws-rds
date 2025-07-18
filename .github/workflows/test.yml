@@ -74,7 +74,7 @@ jobs:
             echo "Creating SonarQube project: $PROJECT_KEY"
             curl -s -X POST -u "${{ secrets.SONAR_TOKEN }}:" \
               "${{ secrets.SONAR_HOST_URL }}/api/projects/create" \
-              -d "organization=appvia" \
+              -d "organization=appvia-demos" \
               -d "project=${PROJECT_KEY}" \
               -d "name=${PROJECT_NAME}" \
               -d "visibility=private"

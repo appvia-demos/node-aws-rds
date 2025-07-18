@@ -1,0 +1,156 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 0431b68..d9eb6c9 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -1,10 +1,10 @@
+ 
+ name: Release
+ 
+-# Configures this workflow to run every time a change is pushed to the branch called `main`, or a version tag is pushed.
++# Configures this workflow to run every time a version tag is pushed.
++# Removed main branch trigger to avoid duplicate builds with test.yml
+ on:
+   push:
+-    branches: ['main']
+     tags:
+       - 'v*'
+ 
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+index a4de4f4..b17a37b 100644
+--- a/.github/workflows/test.yml
++++ b/.github/workflows/test.yml
+@@ -33,18 +33,19 @@ jobs:
+         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
+         run: |
+           # Extract image name from GitHub repository
+-          IMAGE_NAME=$(echo "" | cut -d'/' -f2)
++          IMAGE_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+           
+           # Login to JFrog Artifactory
+-          echo "" | docker login  -u  --password-stdin
++          ARTIFACTORY_HOST=$(echo "${{ secrets.ARTIFACTORY_URL }}" | sed 's|https://||')
++          echo "${{ secrets.ARTIFACTORY_ACCESS_TOKEN }}" | docker login ${ARTIFACTORY_HOST} -u ${{ secrets.ARTIFACTORY_USERNAME }} --password-stdin
+           
+           # Build and tag the image
+-          docker build -t //${IMAGE_NAME}:latest .
+-          docker build -t //${IMAGE_NAME}: .
++          docker build -t ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:latest .
++          docker build -t ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:${{ github.sha }} .
+           
+           # Push both tags
+-          docker push //${IMAGE_NAME}:latest
+-          docker push //${IMAGE_NAME}:
++          docker push ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:latest
++          docker push ${ARTIFACTORY_HOST}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:${{ github.sha }}
+ 
+       - name: Start containers
+         run: docker compose up --build --detach
+@@ -61,18 +62,18 @@ jobs:
+         if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
+         run: |
+           # Create SonarQube project if it doesn't exist
+-          PROJECT_KEY="_"
+-          PROJECT_NAME=""
++          PROJECT_KEY="${{ github.repository_owner }}_${{ github.event.repository.name }}"
++          PROJECT_NAME="${{ github.event.repository.name }}"
+           
+           # Check if project exists
+-          PROJECT_EXISTS=$(curl -s -u ":" \
+-            "/api/projects/search?projects=${PROJECT_KEY}" | \
++          PROJECT_EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
++            "${{ secrets.SONAR_HOST_URL }}/api/projects/search?projects=${PROJECT_KEY}" | \
+             jq -r '.components | length')
+           
+           if [ "$PROJECT_EXISTS" -eq "0" ]; then
+             echo "Creating SonarQube project: $PROJECT_KEY"
+-            curl -s -X POST -u ":" \
+-              "/api/projects/create" \
++            curl -s -X POST -u "${{ secrets.SONAR_TOKEN }}:" \
++              "${{ secrets.SONAR_HOST_URL }}/api/projects/create" \
+               -d "project=${PROJECT_KEY}" \
+               -d "name=${PROJECT_NAME}" \
+               -d "visibility=private"
+@@ -80,7 +81,7 @@ jobs:
+             echo "SonarQube project already exists: $PROJECT_KEY"
+           fi
+         env:
+-          SONAR_TOKEN: 
++          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
+ 
+       - name: SonarQube Scan
+         if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
+@@ -88,6 +89,6 @@ jobs:
+         with:
+           projectBaseDir: .
+         env:
+-          GITHUB_TOKEN: 
+-          SONAR_TOKEN: 
+-          SONAR_HOST_URL: 
+\ No newline at end of file
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
++          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} 
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index 13d0167..61ddf92 100644
+--- a/README.md
++++ b/README.md
+@@ -19,17 +19,41 @@ Ensure [MySQL RDS cloud resource plan](./mysql-rds-cloud-resource-plan.yaml) is
+ 
+ ## 🔧 Required GitHub Secrets
+ 
+-When projects are created from this template, configure the following GitHub repository secrets for the CI/CD pipeline:
++When projects are created from this template, configure the following GitHub repository secrets for the CI/CD pipeline using the GitHub CLI:
+ 
+ ### JFrog Artifactory Secrets (Required)
+-- `ARTIFACTORY_URL`: JFrog Artifactory hostname (e.g., `trialm6kl97.jfrog.io`)
+-- `ARTIFACTORY_USERNAME`: Your JFrog username
+-- `ARTIFACTORY_ACCESS_TOKEN`: Your JFrog Artifactory access token
+-- `ARTIFACTORY_DOCKER_REPO`: Docker repository name (e.g., `docker-trial`)
++
++```bash
++# Set JFrog Artifactory URL
++gh secret set ARTIFACTORY_URL --body "https://your-artifactory-instance.jfrog.io"
++
++# Set JFrog username
++gh secret set ARTIFACTORY_USERNAME --body "your-username@example.com"
++
++# Set JFrog access token
++gh secret set ARTIFACTORY_ACCESS_TOKEN --body "your-artifactory-access-token"
++
++# Set Docker repository name
++gh secret set ARTIFACTORY_DOCKER_REPO --body "docker-repo-name"
++```
+ 
+ ### SonarQube Secrets (Optional)
+-- `SONAR_TOKEN`: SonarQube authentication token
+-- `SONAR_HOST_URL`: SonarQube server URL
++
++```bash
++# Set SonarQube authentication token
++gh secret set SONAR_TOKEN --body "your-sonarqube-token"
++
++# Set SonarQube server URL
++gh secret set SONAR_HOST_URL --body "https://sonarcloud.io"
++```
++
++### List All Secrets
++
++To verify all secrets have been added:
++
++```bash
++gh secret list
++```
+ 
+ For detailed setup instructions, see:
+ - [Artifactory Setup Guide](docs/artifactory-setup.md)
+diff --git a/sonar-project.properties b/sonar-project.properties
+index 0b3b011..60f89d7 100644
+--- a/sonar-project.properties
++++ b/sonar-project.properties
+@@ -1,4 +1,5 @@
+ # SonarQube project configuration
++sonar.organization=appvia
+ sonar.projectKey=appvia-demos_node-aws-rds
+ sonar.projectName=node-aws-rds
+ sonar.projectVersion=1.0
