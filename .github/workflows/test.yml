@@ -77,7 +77,8 @@ jobs:
               -d "organization=appvia-demos" \
               -d "project=${PROJECT_KEY}" \
               -d "name=${PROJECT_NAME}" \
-              -d "visibility=private"
+              -d "visibility=private" \
+              -d "mainBranchName=main"
           else
             echo "SonarQube project already exists: $PROJECT_KEY"
           fi
