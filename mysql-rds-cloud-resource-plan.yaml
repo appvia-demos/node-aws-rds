@@ -1,0 +1,69 @@
+apiVersion: cloudresources.appvia.io/v2beta2
+kind: CloudResourcePlan
+metadata:
+  name: appvia-rds-mysql
+spec:
+  cloud: aws
+  description: Appvia's RDS module pre-configured for a MySQL database
+  inputs:
+  - description: The name of the database you want to create
+    name: db_name
+    type: string
+    validation:
+      required: true
+  - description: The instance type of the RDS instance
+    name: instance_class
+    options:
+    - db.t3.micro
+    - db.t3.small
+    - db.t3.medium
+    - db.t3.large
+    type: string
+    validation:
+      default: db.t3.micro
+      required: true
+  scope:
+    allStages: true
+    allWorkspaces: true
+  terraform:
+    moduleURL: https://github.com/appvia/terraform-aws-rds
+    moduleVersion: v0.0.7
+    tfVarsTemplate: |-
+      # db_name (string): The name of the database you want to create
+      db_name = "{{ .App.AppEnv.Name | replace "-" ""}}{{ .App.Component.Inputs.db_name }}"
+
+      # subnet_ids (list(string)): The Subnet IDs you want to use for the RDS instance
+      subnet_ids = {{ toJson .Cluster.Network.AWS.PrivateSubnetIDs }}
+
+      # tags (map(string)): The tags you want to apply to the RDS instance
+      tags = {}
+
+      # vpc_id (string): The VPC ID that the RDS instance will be within
+      vpc_id = "{{ .Cluster.Network.AWS.VPCID }}"
+
+      # allocated_storage (number, has default: yes): The allocated storage in gigabytes
+      allocated_storage = 10
+
+      # allowed_cidr_blocks (map(string), has default: no): The CIDR blocks you want to allow access to the RDS instance
+      allowed_cidr_blocks = {
+        "internal" = "10.0.0.0/8"
+      }
+
+      # engine (string, has default: yes): The database engine you want to use i.e mysql, postgres, etc
+      engine = "mysql"
+
+      # engine_version (string, has default: yes): The version of the database engine you want to use
+      engine_version = "8.0"
+
+      # family (string, has default: yes): The family of the database engine you want to use
+      family = "mysql8.0"
+
+      # instance_class (string, has default: yes): The instance type of the RDS instance
+      instance_class = "{{ .App.Component.Inputs.instance_class }}"
+
+      # major_engine_version (string, has default: yes): The major version of the database engine you want to use
+      major_engine_version = "8.0"
+
+      # license_model (string, has default: yes): The license model you want to use
+      license_model = "general-public-license"
+  version: 1.0.0

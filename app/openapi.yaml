@@ -1,0 +1,105 @@
+openapi: 3.0.1
+info:
+  title: Todo App API
+  description: Simple REST API for managing todo items
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+paths:
+  /items:
+    get:
+      summary: Get all todo items
+      operationId: getItems
+      responses:
+        '200':
+          description: List of todo items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TodoItem'
+    post:
+      summary: Create a new todo item
+      operationId: addItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the todo item
+              required:
+                - name
+      responses:
+        '200':
+          description: Created todo item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoItem'
+  /items/{id}:
+    put:
+      summary: Update a todo item
+      operationId: updateItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                completed:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated todo item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoItem'
+    delete:
+      summary: Delete a todo item
+      operationId: deleteItem
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item deleted successfully
+components:
+  schemas:
+    TodoItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the todo item
+        name:
+          type: string
+          description: Name of the todo item
+        completed:
+          type: boolean
+          description: Whether the todo item is completed
+      required:
+        - id
+        - name
+        - completed

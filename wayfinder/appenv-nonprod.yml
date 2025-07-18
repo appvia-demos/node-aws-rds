@@ -1,0 +1,16 @@
+---
+# yamllint disable rule:line-length
+apiVersion: app.appvia.io/v2beta1
+kind: AppEnv
+metadata:
+  name: node-aws-rds-nonprod
+spec:
+  application: node-aws-rds
+  cloud: aws
+  clusterRef:
+    group: compute.appvia.io
+    kind: Cluster
+    name: nonprod
+    version: v2beta2
+  name: nonprod
+  stage: nonprod

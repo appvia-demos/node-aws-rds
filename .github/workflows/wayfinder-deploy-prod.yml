@@ -1,0 +1,29 @@
+
+name: Wayfinder deploy to production environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      image-tag:
+        description: 'Image tag to deploy to production'
+        required: true
+        default: 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    uses: appvia-demos/ci-reusable-workflows/.github/workflows/wayfinder-deploy-workflow.yml@main
+    secrets:
+      wayfinder-token: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
+    with:
+      registry: ghcr.io
+      image-name: ${{ github.repository }}
+      image-tag: ${{ inputs.image-tag }}
+      wayfinder-server: ${{ vars.WAYFINDER_SERVER }}
+      wayfinder-workspace: ${{ vars.WAYFINDER_WORKSPACE }}
+      wayfinder-resource-owner: ${{ vars.WAYFINDER_RESOURCE_OWNER }}
+      application-name: ${{ vars.APPLICATION_NAME }}
+      application-stage: prod
+

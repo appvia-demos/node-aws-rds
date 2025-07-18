@@ -1,0 +1,61 @@
+---
+apiVersion: app.appvia.io/v2beta1
+kind: AppComponent
+metadata:
+  name: mysql-node-aws-rds
+spec:
+  application: node-aws-rds
+  cloudResource:
+    plan: appvia-rds-mysql
+    planVersion: 1.0.0
+    variables:
+      # db_name below will be prefixed with the app environment name
+      # when component gets deployed as database names must be unique
+      # within the same AWS account. See the referencced CR plan for more info.
+      db_name: todos
+      allocated_storage: 10
+      instance_class: db.t3.micro
+  key: mysql
+  name: mysql-node-aws-rds
+  type: CloudResource
+---
+apiVersion: app.appvia.io/v2beta1
+kind: AppComponent
+metadata:
+  name: app-node-aws-rds
+spec:
+  application: node-aws-rds
+  container:
+    containers:
+      - env:
+          - name: MYSQL_HOST
+            fromCloudResourceOutput:
+              componentName: mysql-node-aws-rds
+              output: DATABASE_HOST
+          - name: MYSQL_USER
+            fromCloudResourceOutput:
+              componentName: mysql-node-aws-rds
+              output: DATABASE_USER
+          - name: MYSQL_PASSWORD
+            fromCloudResourceOutput:
+              componentName: mysql-node-aws-rds
+              output: DATABASE_PASSWORD
+          - name: MYSQL_DB
+            fromCloudResourceOutput:
+              componentName: mysql-node-aws-rds
+              output: DATABASE_NAME
+        image: //node-aws-rds:latest
+        name: app
+        ports:
+          - containerPort: 3000
+            expose: true
+            name: http
+            protocol: TCP
+    expose:
+      container: app
+      port: 3000
+    replicas: 1
+    tls: true
+  key: app
+  name: app-node-aws-rds
+  type: Container

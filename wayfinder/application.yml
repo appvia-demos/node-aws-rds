@@ -1,0 +1,9 @@
+---
+apiVersion: app.appvia.io/v2beta1
+kind: Application
+metadata:
+  name: node-aws-rds
+spec:
+  cloud: aws
+  description: Node.js + MySQL AWS RDS Application
+  name: node-aws-rds

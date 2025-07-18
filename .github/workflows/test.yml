@@ -1,0 +1,93 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: ['main']
+  push:
+    branches: ['main']
+
+jobs:
+  test-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install app dependencies
+        working-directory: ./app
+        run: yarn install
+
+      - name: Run app tests with coverage
+        working-directory: ./app
+        run: yarn test --coverage --watchAll=false
+
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
+        run: |
+          # Extract image name from GitHub repository
+          IMAGE_NAME=$(echo "" | cut -d'/' -f2)
+          
+          # Login to JFrog Artifactory
+          echo "" | docker login  -u  --password-stdin
+          
+          # Build and tag the image
+          docker build -t //${IMAGE_NAME}:latest .
+          docker build -t //${IMAGE_NAME}: .
+          
+          # Push both tags
+          docker push //${IMAGE_NAME}:latest
+          docker push //${IMAGE_NAME}:
+
+      - name: Start containers
+        run: docker compose up --build --detach
+
+      - name: Run integration test
+        run: |
+          docker ps
+          for i in {1..10}; do curl -m 10 -s localhost:3000 | grep 'Appvia Todo List' && echo "[Attempt $i] Endpoint returned expected response." && exit 0 || echo "[Attempt $i] Endpoint not returning expected response, retrying in 5 seconds.." && sleep 5; done; exit 1
+
+      - name: Stop containers
+        run: docker compose down
+
+      - name: Setup SonarQube project
+        if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
+        run: |
+          # Create SonarQube project if it doesn't exist
+          PROJECT_KEY="_"
+          PROJECT_NAME=""
+          
+          # Check if project exists
+          PROJECT_EXISTS=$(curl -s -u ":" \
+            "/api/projects/search?projects=${PROJECT_KEY}" | \
+            jq -r '.components | length')
+          
+          if [ "$PROJECT_EXISTS" -eq "0" ]; then
+            echo "Creating SonarQube project: $PROJECT_KEY"
+            curl -s -X POST -u ":" \
+              "/api/projects/create" \
+              -d "project=${PROJECT_KEY}" \
+              -d "name=${PROJECT_NAME}" \
+              -d "visibility=private"
+          else
+            echo "SonarQube project already exists: $PROJECT_KEY"
+          fi
+        env:
+          SONAR_TOKEN: 
+
+      - name: SonarQube Scan
+        if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
+        uses: SonarSource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: .
+        env:
+          GITHUB_TOKEN: 
+          SONAR_TOKEN: 
+          SONAR_HOST_URL: 

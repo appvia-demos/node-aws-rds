@@ -1,0 +1,29 @@
+
+name: Validate WF config and create app preview
+
+on:
+  pull_request:
+    branches:
+    - main
+
+permissions:
+  id-token: write
+  contents: read
+  attestations: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  pr:
+    uses: appvia-demos/ci-reusable-workflows/.github/workflows/wayfinder-pr-workflow.yml@main
+    secrets:
+      wayfinder-token: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
+    with:
+      registry: ghcr.io
+      image-name: ${{ github.repository }}
+      wayfinder-server: ${{ vars.WAYFINDER_SERVER }}
+      wayfinder-workspace: ${{ vars.WAYFINDER_WORKSPACE }}
+      wayfinder-resource-owner: ${{ vars.WAYFINDER_RESOURCE_OWNER }}
+      application-name: ${{ vars.APPLICATION_NAME }}
+
+      cluster: nonprod

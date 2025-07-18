@@ -1,0 +1,10 @@
+site_name: "node-aws-rds"
+site_description: 
+
+nav:
+  - Introduction: index.md
+  - Development: development.md
+  - RDS Integration: rds-integration.md
+
+plugins:
+  - techdocs-core

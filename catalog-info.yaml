@@ -1,0 +1,111 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: node-aws-rds-app
+  # title: Wayfinder Application
+  description: Application created from the backstage software template
+  labels: {}
+  annotations:
+    backstage.io/source-location: url:https://github.com/appvia-demos/node-aws-rds
+    github.com/project-slug: appvia-demos/node-aws-rds
+    sonarqube.org/project-key: appvia-demos_node-aws-rds
+    backstage.io/techdocs-ref: url:https://github.com/appvia-demos/node-aws-rds/tree/main
+    jfrog-artifactory/image-name: /node-aws-rds
+    wayfinder/workspace: demo    
+    wayfinder/app-name: node-aws-rds
+    wayfinder/app-component-name: node-aws-rds-app
+  tags:
+    - wayfinder
+  links:
+    - url: https://github.com/appvia-demos/node-aws-rds
+      title: GitHub Repository
+      type: Code
+      icon: github
+    - url: https://github.com/appvia-demos/node-aws-rds/actions
+      title: GitHub Actions
+      type: CI/CD
+      icon: github
+    - url: https://github.com/appvia-demos/node-aws-rds/releases
+      title: Releases
+      type: Release
+      icon: github
+    - url: https://sonarcloud.io/project/overview?id=appvia-demos_node-aws-rds
+      title: SonarCloud Quality Gate
+      type: Quality
+      icon: sonarcloud
+    - url: https://portal.backstage.prod.wf.appvia.io/catalog/default/component/node-aws-rds-app
+      title: Production Backstage
+      type: Backstage
+      icon: backstage
+    - url: https:///ui/repos/tree/General//node-aws-rds
+      title: JFrog Artifactory
+      type: Docker Registry
+      icon: artifactory
+spec:
+  type: service
+  owner: user:default/ssun3
+  lifecycle: experimental
+  dependsOn:
+    - resource:default/node-aws-rds-mysql
+  providesApis:
+    - node-aws-rds-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: node-aws-rds-mysql
+  # title: Wayfinder Application DB
+  description: AWS RDS MySQL Database used by the Wayfinder Application
+  labels: {}
+  annotations:
+    backstage.io/source-location: url:https://github.com/appvia-demos/node-aws-rds
+    github.com/project-slug: appvia-demos/node-aws-rds
+    sonarqube.org/project-key: appvia-demos_node-aws-rds
+    backstage.io/techdocs-ref: url:https://github.com/appvia-demos/node-aws-rds/tree/main
+    wayfinder/workspace: demo
+    wayfinder/app-name: node-aws-rds
+    wayfinder/app-component-name: node-aws-rds-mysql
+  tags:
+    - wayfinder
+  links:
+    - url: https://github.com/appvia-demos/node-aws-rds
+      title: GitHub Repository
+      type: Code
+      icon: github
+spec:
+  type: database
+  owner: user:default/ssun3
+  lifecycle: experimental
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: node-aws-rds-api
+  description: REST API for the node-aws-rds todo application with RDS database
+  labels: {}
+  annotations:
+    backstage.io/source-location: url:https://github.com/appvia-demos/node-aws-rds
+    github.com/project-slug: appvia-demos/node-aws-rds
+    backstage.io/techdocs-ref: url:https://github.com/appvia-demos/node-aws-rds/tree/main
+    wayfinder/workspace: demo
+    wayfinder/app-name: node-aws-rds
+  tags:
+    - wayfinder
+    - rest
+    - todo
+    - rds
+  links:
+    - url: https://github.com/appvia-demos/node-aws-rds
+      title: GitHub Repository
+      type: Code
+      icon: github
+    - url: https://github.com/appvia-demos/node-aws-rds/blob/main/app/openapi.yaml
+      title: OpenAPI Specification
+      type: API Spec
+      icon: openapi
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: user:default/ssun3
+  definition:
+    $text: ./app/openapi.yaml

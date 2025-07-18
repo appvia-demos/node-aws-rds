@@ -1,0 +1,27 @@
+
+name: Wayfinder deploy to non-production environment
+
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    uses: appvia-demos/ci-reusable-workflows/.github/workflows/wayfinder-deploy-workflow.yml@main
+    secrets:
+      wayfinder-token: ${{ secrets.WAYFINDER_TOKEN_NONPROD }}
+    with:
+      registry: ghcr.io
+      image-name: ${{ github.repository }}
+      image-tag: latest
+      wayfinder-server: ${{ vars.WAYFINDER_SERVER }}
+      wayfinder-workspace: ${{ vars.WAYFINDER_WORKSPACE }}
+      wayfinder-resource-owner: ${{ vars.WAYFINDER_RESOURCE_OWNER }}
+      application-name: ${{ vars.APPLICATION_NAME }}
+      application-stage: nonprod
+
