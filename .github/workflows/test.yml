@@ -33,18 +33,18 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
         run: |
           # Extract image name from GitHub repository
-          IMAGE_NAME=$(echo "" | cut -d'/' -f2)
+          IMAGE_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
           
           # Login to JFrog Artifactory
-          echo "" | docker login  -u  --password-stdin
+          echo "${{ secrets.ARTIFACTORY_ACCESS_TOKEN }}" | docker login ${{ secrets.ARTIFACTORY_URL }} -u ${{ secrets.ARTIFACTORY_USERNAME }} --password-stdin
           
           # Build and tag the image
-          docker build -t //${IMAGE_NAME}:latest .
-          docker build -t //${IMAGE_NAME}: .
+          docker build -t ${{ secrets.ARTIFACTORY_URL }}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:latest .
+          docker build -t ${{ secrets.ARTIFACTORY_URL }}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:${{ github.sha }} .
           
           # Push both tags
-          docker push //${IMAGE_NAME}:latest
-          docker push //${IMAGE_NAME}:
+          docker push ${{ secrets.ARTIFACTORY_URL }}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:latest
+          docker push ${{ secrets.ARTIFACTORY_URL }}/${{ secrets.ARTIFACTORY_DOCKER_REPO }}/${IMAGE_NAME}:${{ github.sha }}
 
       - name: Start containers
         run: docker compose up --build --detach
@@ -61,18 +61,18 @@ jobs:
         if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
         run: |
           # Create SonarQube project if it doesn't exist
-          PROJECT_KEY="_"
-          PROJECT_NAME=""
+          PROJECT_KEY="${{ github.repository_owner }}_${{ github.event.repository.name }}"
+          PROJECT_NAME="${{ github.event.repository.name }}"
           
           # Check if project exists
-          PROJECT_EXISTS=$(curl -s -u ":" \
-            "/api/projects/search?projects=${PROJECT_KEY}" | \
+          PROJECT_EXISTS=$(curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "${{ secrets.SONAR_HOST_URL }}/api/projects/search?projects=${PROJECT_KEY}" | \
             jq -r '.components | length')
           
           if [ "$PROJECT_EXISTS" -eq "0" ]; then
             echo "Creating SonarQube project: $PROJECT_KEY"
-            curl -s -X POST -u ":" \
-              "/api/projects/create" \
+            curl -s -X POST -u "${{ secrets.SONAR_TOKEN }}:" \
+              "${{ secrets.SONAR_HOST_URL }}/api/projects/create" \
               -d "project=${PROJECT_KEY}" \
               -d "name=${PROJECT_NAME}" \
               -d "visibility=private"
@@ -80,7 +80,7 @@ jobs:
             echo "SonarQube project already exists: $PROJECT_KEY"
           fi
         env:
-          SONAR_TOKEN: 
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} 
 
       - name: SonarQube Scan
         if: env.SONAR_TOKEN != '' && github.repository != 'appvia-demos/backstage-wayfinder-todo-app-with-rds-template'
@@ -88,6 +88,6 @@ jobs:
         with:
           projectBaseDir: .
         env:
-          GITHUB_TOKEN: 
-          SONAR_TOKEN: 
-          SONAR_HOST_URL: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} 

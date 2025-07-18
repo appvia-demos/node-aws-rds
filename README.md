@@ -19,17 +19,41 @@ Ensure [MySQL RDS cloud resource plan](./mysql-rds-cloud-resource-plan.yaml) is 
 
 ## 🔧 Required GitHub Secrets
 
-When projects are created from this template, configure the following GitHub repository secrets for the CI/CD pipeline:
+When projects are created from this template, configure the following GitHub repository secrets for the CI/CD pipeline using the GitHub CLI:
 
 ### JFrog Artifactory Secrets (Required)
-- `ARTIFACTORY_URL`: JFrog Artifactory hostname (e.g., `trialm6kl97.jfrog.io`)
-- `ARTIFACTORY_USERNAME`: Your JFrog username
-- `ARTIFACTORY_ACCESS_TOKEN`: Your JFrog Artifactory access token
-- `ARTIFACTORY_DOCKER_REPO`: Docker repository name (e.g., `docker-trial`)
+
+```bash
+# Set JFrog Artifactory URL
+gh secret set ARTIFACTORY_URL --body "https://your-artifactory-instance.jfrog.io"
+
+# Set JFrog username
+gh secret set ARTIFACTORY_USERNAME --body "your-username@example.com"
+
+# Set JFrog access token
+gh secret set ARTIFACTORY_ACCESS_TOKEN --body "your-artifactory-access-token"
+
+# Set Docker repository name
+gh secret set ARTIFACTORY_DOCKER_REPO --body "docker-repo-name"
+```
 
 ### SonarQube Secrets (Optional)
-- `SONAR_TOKEN`: SonarQube authentication token
-- `SONAR_HOST_URL`: SonarQube server URL
+
+```bash
+# Set SonarQube authentication token
+gh secret set SONAR_TOKEN --body "your-sonarqube-token"
+
+# Set SonarQube server URL
+gh secret set SONAR_HOST_URL --body "https://sonarcloud.io"
+```
+
+### List All Secrets
+
+To verify all secrets have been added:
+
+```bash
+gh secret list
+```
 
 For detailed setup instructions, see:
 - [Artifactory Setup Guide](docs/artifactory-setup.md)
